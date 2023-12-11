@@ -3,7 +3,7 @@ import express, { json } from 'express'
 import cors from 'cors'
 import { connect as _connect, set } from 'mongoose'
 import bodyParser from 'body-parser'
-import './models/restaurant.js'
+import { restaurantRecommendation } from './controllers/restaurant.js'
 
 const app = express()
 app.use(cors())
@@ -11,6 +11,8 @@ app.use(json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
+
+app.use('/restaurant', restaurantRecommendation)
 
 set('strictQuery', true)
 const url = `mongodb+srv://${process.env.USER_NAME}:${process.env.PASSWORD}${process.env.MONGODB_URI}`
