@@ -1,8 +1,15 @@
 import Restaurant from '../models/restaurant.js'
+import { getCurrentTime } from '../utils/time.js'
 
 export const createRestaurant = async (req, res) => {
   try {
-    const restaurant = new Restaurant(req.body)
+    const { name, style, address, openhours, closehours, vegetarian } = req.body
+    if (!name || !style || !address || !openhours || !closehours || !vegetarian) {
+      return res.status(400).json({ message: 'missing required fields' })
+    }
+    const restaurant = new Restaurant({
+      ...req.body,
+    })
     await restaurant.save()
     res.status(201).json(restaurant)
   } catch (err) {
@@ -52,13 +59,36 @@ export const deleteRestaurantById = async (req, res) => {
 
 export const restaurantRecommendation = async (req, res) => {
   try {
-    const { style, vegetarian,  } = req.body
-    const restaurants = await Restaurant.find({
-      vegetarian: vegetarian,
-      style: style,
+    // recommend restauarant by name, style, address, openhours, closehours, vegetarian
+    const { name, style, address, openhours, closehours, vegetarian } = req.body
+    const query = {
+      $or: [
+        { name },
+        { style },
+        { address },
+        { vegetarian },
+      ],
+    };
+    if (openhours && closehours) {
+      const currentTime = getCurrentTime();
+      query.openhours = { $lte: currentTime };
+      query.closehours = { $gte: currentTime };
+    }
+    const restaurant = await Restaurant.find(query);
+    res.status(200).json({
+      message: {
+        restaurant: {
+          name: restaurant.name,
+          style: restaurant.style,
+          address: restaurant.address,
+          openhours: restaurant.openhours,
+          closehours: restaurant.closehours,
+          vegetarian: restaurant.vegetarian,
+        }
+      }
     })
-    res.status(200).json(restaurants)
-  } catch (err) {
+  }
+  catch (err) {
     res.status(404).json({ message: err.message })
   }
 }
